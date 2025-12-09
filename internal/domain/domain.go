@@ -23,6 +23,7 @@ type ChatRequest struct {
 	InputHasVars          bool
 	NoVariableReplacement bool
 	StrategyName          string
+	SystemPrompt          string
 }
 
 type ChatOptions struct {
@@ -51,6 +52,7 @@ type ChatOptions struct {
 	Voice               string
 	Notification        bool
 	NotificationCommand string
+	ResponseFormat      string
 }
 
 // NormalizeMessages remove empty messages and ensure messages order user-assist-user

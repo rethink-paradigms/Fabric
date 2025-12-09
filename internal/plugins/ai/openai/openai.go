@@ -274,6 +274,10 @@ func (o *Client) buildResponseParams(
 		if opts.Seed != 0 {
 			extraFields["seed"] = opts.Seed
 		}
+		// Add JSON response format if requested
+		if opts.ResponseFormat == "json" {
+			extraFields["response_format"] = map[string]string{"type": "json_object"}
+		}
 		if len(extraFields) > 0 {
 			ret.SetExtraFields(extraFields)
 		}

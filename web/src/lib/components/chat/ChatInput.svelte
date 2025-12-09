@@ -20,8 +20,10 @@
 
 
 
+  import { userInput } from '$lib/store/user-input-store';
+
   const chatService = new ChatService();
-  let userInput = "";
+  // let userInput = "";
   let isYouTubeURL = false;
   const toastStore = getToastStore();
   let files: FileList | undefined = undefined;
@@ -44,7 +46,7 @@
   function handleInput(event: Event) {
     console.log('\n=== Handle Input ===');
     const target = event.target as HTMLTextAreaElement;
-    userInput = target.value;
+    userInput.set(target.value);
     
     const currentLanguage = get(languageStore);
     
@@ -59,10 +61,10 @@
 
     let detectedLang = '';
     for (const [qualifier, lang] of Object.entries(languageQualifiers)) {
-      if (userInput.includes(qualifier)) {
+      if ($userInput.includes(qualifier)) {
         detectedLang = lang;
         languageStore.set(lang);
-        userInput = userInput.replace(new RegExp(`${qualifier}\\s*`), '');
+        userInput.set($userInput.replace(new RegExp(`${qualifier}\\s*`), ''));
         break;
       }
     }
@@ -71,10 +73,10 @@
       previousLanguage: currentLanguage,
       currentLanguage: get(languageStore),
       detectedOverride: detectedLang,
-      inputAfterLangRemoval: userInput
+      inputAfterLangRemoval: $userInput
     });
 
-    isYouTubeURL = detectYouTubeURL(userInput);
+    isYouTubeURL = detectYouTubeURL($userInput);
     console.log('3. URL detection:', {
       isYouTube: isYouTubeURL,
       pattern: $selectedPatternName,
@@ -182,7 +184,7 @@ async function readFileContent(file: File): Promise<string> {
       const enhancedPrompt = `${$systemPrompt}\nAnalyze and process the provided content according to these instructions.`;
       
       // Format final content with proper labeling
-      const finalContent = `${userInput}\n\nFile Contents (PDF):\n${markdown}`;
+      const finalContent = `${$userInput}\n\nFile Contents (PDF):\n${markdown}`;
       
       // Process through pattern system
       await sendMessage(finalContent, enhancedPrompt);
@@ -217,7 +219,7 @@ async function readFileContent(file: File): Promise<string> {
       });
       // resolve(content);
       const enhancedPrompt = `${$systemPrompt}\nAnalyze and process the provided content according to these instructions.`;
-      const finalContent = `${userInput}\n\nFile Contents (Text):\n${content}`;
+      const finalContent = `${$userInput}\n\nFile Contents (Text):\n${content}`;
       await sendMessage(finalContent, enhancedPrompt);
       resolve(content);
     };
@@ -361,7 +363,7 @@ async function readFileContent(file: File): Promise<string> {
               if (lastContent) await saveToObsidian(lastContent);
           }
 
-          userInput = "";
+          userInput.set("");
           uploadedFiles = [];
           fileContents = [];
       } catch (error) {
@@ -374,13 +376,13 @@ async function readFileContent(file: File): Promise<string> {
   }
 
   async function handleSubmit() {
-  if (!userInput.trim()) return;
+  if (!$userInput.trim()) return;
 
   try {
     console.log('\n=== Submit Handler Start ===');
     
     // Store the user input before any processing
-    const inputText = userInput.trim();
+    const inputText = $userInput.trim();
     console.log('Captured user input:', inputText);
     
     // Handle YouTube URLs with the existing flow
@@ -404,7 +406,7 @@ async function readFileContent(file: File): Promise<string> {
     }]);
     
     // Clear input fields
-    userInput = "";
+    userInput.set("");
     const filesForProcessing = [...uploadedFiles];
     const contentsForProcessing = [...fileContents];
     uploadedFiles = [];
@@ -560,7 +562,7 @@ async function readFileContent(file: File): Promise<string> {
 <div class="h-full flex flex-col p-2">
   <div class="relative flex-1 min-h-0 bg-primary-800/30 rounded-lg">
     <Textarea
-      bind:value={userInput}
+      bind:value={$userInput}
       on:input={handleInput}
       on:keydown={handleKeydown}
       placeholder="Enter your message (YouTube URLs will be automatically processed)..."
@@ -592,7 +594,7 @@ async function readFileContent(file: File): Promise<string> {
           size="icon"
           name="send"
           on:click={handleSubmit}
-          disabled={isProcessingFiles || !userInput.trim()}
+          disabled={isProcessingFiles || !$userInput.trim()}
           class="h-10 w-10 bg-primary-800/30 hover:bg-primary-800/50 rounded-full transition-colors disabled:opacity-30"
         >
           <Send class="w-5 h-5" />

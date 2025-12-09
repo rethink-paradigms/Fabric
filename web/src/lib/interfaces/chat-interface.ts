@@ -9,6 +9,7 @@ export interface ChatPrompt {
   patternName?: string;
   strategyName?: string; // Optional strategy name to prepend strategy prompt
   variables?: { [key: string]: string }; // Pattern variables
+  responseFormat?: 'json' | 'text';
 }
 
 export interface ChatConfig {

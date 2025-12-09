@@ -30,6 +30,8 @@ type PromptRequest struct {
 	PatternName  string            `json:"patternName"`
 	StrategyName string            `json:"strategyName"`        // Optional strategy name
 	Variables    map[string]string `json:"variables,omitempty"` // Pattern variables
+	ResponseFormat string            `json:"responseFormat,omitempty"`
+	SystemPrompt   string            `json:"systemPrompt,omitempty"`
 }
 
 type ChatRequest struct {
@@ -65,8 +67,13 @@ func (h *ChatHandler) HandleChat(c *gin.Context) {
 		return
 	}
 
-	// Add log to check received language field
-	log.Printf("Received chat request - Language: '%s', Prompts: %d", request.Language, len(request.Prompts))
+	// TRACE POINT 1: Log all request data after binding
+	log.Printf("=== TRACE POINT 1: After JSON Binding ===")
+	log.Printf("  Language: '%s', Prompts count: %d", request.Language, len(request.Prompts))
+	for i, p := range request.Prompts {
+		log.Printf("  Prompt[%d]: Model='%s', ResponseFormat='%s', PatternName='%s', SystemPrompt length=%d",
+			i, p.Model, p.ResponseFormat, p.PatternName, len(p.SystemPrompt))
+	}
 
 	// Set headers for SSE
 	c.Writer.Header().Set("Content-Type", "text/readystream")
@@ -122,6 +129,7 @@ func (h *ChatHandler) HandleChat(c *gin.Context) {
 					ContextName:      p.ContextName,
 					PatternVariables: p.Variables,      // Pass pattern variables
 					Language:         request.Language, // Pass the language field
+					SystemPrompt:     p.SystemPrompt,
 				}
 
 				opts := &domain.ChatOptions{
@@ -131,7 +139,12 @@ func (h *ChatHandler) HandleChat(c *gin.Context) {
 					FrequencyPenalty: request.FrequencyPenalty,
 					PresencePenalty:  request.PresencePenalty,
 					Thinking:         request.Thinking,
+					ResponseFormat:   p.ResponseFormat,
 				}
+				
+				// TRACE POINT 2: Log ChatOptions before calling chatter.Send()
+				log.Printf("=== TRACE POINT 2: ChatOptions created ===")
+				log.Printf("  Model='%s', ResponseFormat='%s', Temperature=%f", opts.Model, opts.ResponseFormat, opts.Temperature)
 
 				session, err := chatter.Send(chatReq, opts)
 				if err != nil {

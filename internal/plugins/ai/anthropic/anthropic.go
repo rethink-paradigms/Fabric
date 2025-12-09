@@ -192,6 +192,13 @@ func (an *Client) SendStream(
 		return
 	}
 
+	// Handle JSON mode with prefill
+	if opts.ResponseFormat == "json" {
+		messages = append(messages, anthropic.NewAssistantMessage(anthropic.NewTextBlock("{")))
+		// Prepend the brace to the output stream so the client gets valid JSON
+		channel <- "{"
+	}
+
 	ctx := context.Background()
 
 	params := an.buildMessageParams(messages, opts)
@@ -281,10 +288,21 @@ func (an *Client) buildMessageParams(msgs []anthropic.MessageParam, opts *domain
 func (an *Client) Send(ctx context.Context, msgs []*chat.ChatCompletionMessage, opts *domain.ChatOptions) (
 	ret string, err error) {
 
+	// TRACE POINT 3: Log what Anthropic plugin receives
+	fmt.Printf("=== TRACE POINT 3: Anthropic.Send() ===\n")
+	fmt.Printf("  ResponseFormat='%s', Model='%s'\n", opts.ResponseFormat, opts.Model)
+	fmt.Printf("  Will apply JSON prefill: %v\n", opts.ResponseFormat == "json")
+
 	messages := an.toMessages(msgs)
 	if len(messages) == 0 {
 		// No messages to send after normalization, return empty string and no error.
 		return
+	}
+
+	// Handle JSON mode with prefill
+	if opts.ResponseFormat == "json" {
+		fmt.Printf("  >> Applying JSON prefill (adding '{' as assistant message)\n")
+		messages = append(messages, anthropic.NewAssistantMessage(anthropic.NewTextBlock("{")))
 	}
 
 	var message *anthropic.Message
@@ -331,6 +349,12 @@ func (an *Client) Send(ctx context.Context, msgs []*chat.ChatCompletionMessage, 
 	}
 
 	var resultBuilder strings.Builder
+	
+	// Prepend the brace if we used prefill for JSON mode
+	if opts.ResponseFormat == "json" {
+		resultBuilder.WriteString("{")
+	}
+
 	resultBuilder.WriteString(strings.Join(textParts, ""))
 
 	// Append citations if any were found

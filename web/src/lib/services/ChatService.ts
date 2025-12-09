@@ -209,6 +209,40 @@ export class ChatService {
     return this.fetchStream(request);
   }
 
+  /**
+   * Stream a chat request in ISOLATED mode - no patternName, strategyName, or variables.
+   * Use this for internal LLM calls like pattern suggestion where you want full control
+   * of the system prompt without backend overriding it with a pattern from disk.
+   * 
+   * IMPORTANT: This method sets temperature to 0 for deterministic JSON output.
+   */
+  public async streamIsolated(userInput: string, systemPromptText: string): Promise<ReadableStream<StreamResponse>> {
+    const config = get(modelConfig);
+    
+    // Build a clean request with NO patternName, strategyName, or variables
+    // Force temperature to 0 for deterministic JSON output
+    const request: ChatRequest = {
+      prompts: [{
+        userInput: userInput,
+        systemPrompt: systemPromptText,
+        model: config.model,
+        // IMPORTANT: Do NOT include patternName, strategyName, or variables
+        // This prevents the backend from overriding our system prompt
+        responseFormat: 'json'
+      }],
+      messages: [],
+      language: 'en', // Force English for JSON output
+      // Force low temperature for deterministic JSON output
+      temperature: 0,
+      top_p: 1,
+      frequency_penalty: 0,
+      presence_penalty: 0,
+    };
+    
+    console.log('streamIsolated - Sending isolated request (temperature=0, no patternName)');
+    return this.fetchStream(request);
+  }
+
   public async processStream(
     stream: ReadableStream<StreamResponse>,
     onContent: (content: string, response?: StreamResponse) => void,

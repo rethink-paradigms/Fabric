@@ -214,6 +214,15 @@ func (o *Chatter) BuildSession(request *domain.ChatRequest, raw bool) (session *
 
 	systemMessage := strings.TrimSpace(contextContent) + strings.TrimSpace(patternContent)
 
+	// Append custom system prompt if provided (e.g., from isolated chat requests)
+	if request.SystemPrompt != "" {
+		if systemMessage != "" {
+			systemMessage = systemMessage + "\n\n" + request.SystemPrompt
+		} else {
+			systemMessage = request.SystemPrompt
+		}
+	}
+
 	if request.StrategyName != "" {
 		strategy, err := strategy.LoadStrategy(request.StrategyName)
 		if err != nil {

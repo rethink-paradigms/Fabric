@@ -353,3 +353,13 @@ tmp/
 
 # Ignore .claude/
 .claude/
+
+# Test binaries
+fabric_test
+
+# Logs directory
+logs/
+
+# Temporary status/tracking files
+PATTERN_SUGGESTION_STATUS.md
+pattern-fixes.md

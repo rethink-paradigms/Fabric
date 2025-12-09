@@ -207,6 +207,10 @@ func (o *Client) buildGenerateContentConfig(opts *domain.ChatOptions) (*genai.Ge
 		MaxOutputTokens: int32(opts.ModelContextLength),
 	}
 
+	if opts.ResponseFormat == "json" {
+		cfg.ResponseMIMEType = "application/json"
+	}
+
 	if opts.Search {
 		cfg.Tools = []*genai.Tool{{GoogleSearch: &genai.GoogleSearch{}}}
 		if loc := opts.SearchLocation; loc != "" {
